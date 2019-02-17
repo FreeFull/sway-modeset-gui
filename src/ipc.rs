@@ -26,7 +26,7 @@ impl Connection {
         let stream = UnixStream::connect(path)?;
         stream.set_read_timeout(Some(Duration::from_secs(30)))?;
         stream.set_write_timeout(Some(Duration::from_secs(30)))?;
-        Ok(Connection{ stream })
+        Ok(Connection { stream })
     }
 
     pub fn get_outputs(&mut self) -> Result<Response> {
@@ -52,7 +52,7 @@ impl Connection {
 
     fn send_message(&mut self, msg_type: MessageType, message: &str) -> Result<()> {
         let msg_type = msg_type as u32;
-                self.stream.write(MAGIC)?;
+        self.stream.write(MAGIC)?;
         self.stream.write(&(message.len() as u32).to_ne_bytes())?;
         self.stream.write(&msg_type.to_ne_bytes())?;
         self.stream.write(message.as_bytes())?;
