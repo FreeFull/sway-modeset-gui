@@ -6,7 +6,6 @@ use std::path::Path;
 use std::time::Duration;
 
 use byteorder::{NativeEndian, ReadBytesExt};
-use serde::Deserialize;
 
 const MAGIC: &[u8; 6] = b"i3-ipc";
 
@@ -31,7 +30,9 @@ impl Connection {
 
     pub fn get_outputs(&mut self) -> Result<Response> {
         self.send_message(MessageType::GetOutputs, &"")?;
-        self.read_message()
+        let message = self.read_message()?;
+        assert_eq!(message.msg_type, MessageType::GetOutputs);
+        Ok(message)
     }
 
     fn read_message(&mut self) -> Result<Response> {
@@ -61,7 +62,7 @@ impl Connection {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum MessageType {
     RunCommand,
     GetWorkspaces,
