@@ -1,6 +1,7 @@
 use std::error::Error;
 
 mod ipc;
+mod ui;
 
 fn main() {
     match run() {
@@ -13,7 +14,7 @@ fn main() {
 
 fn run() -> Result<(), Box<Error>> {
     let mut connection = ipc::Connection::connect()?;
-    let outputs = connection.get_outputs();
-    println!("{:?}", outputs);
+    let outputs = connection.get_outputs()?;
+    ui::run(connection, outputs)?;
     Ok(())
 }
