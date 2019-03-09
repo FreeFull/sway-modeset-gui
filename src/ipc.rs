@@ -6,6 +6,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use byteorder::{NativeEndian, ReadBytesExt};
+use serde::{de::DeserializeOwned, Deserialize};
 
 const MAGIC: &[u8; 6] = b"i3-ipc";
 
@@ -28,14 +29,14 @@ impl Connection {
         Ok(Connection { stream })
     }
 
-    pub fn get_outputs(&mut self) -> Result<Response> {
+    pub fn get_outputs(&mut self) -> Result<Vec<Output>> {
         self.send_message(MessageType::GetOutputs, &"")?;
         let message = self.read_message()?;
         assert_eq!(message.msg_type, MessageType::GetOutputs);
-        Ok(message)
+        Ok(message.content)
     }
 
-    fn read_message(&mut self) -> Result<Response> {
+    fn read_message<T: DeserializeOwned>(&mut self) -> Result<Response<T>> {
         let mut small_buffer = [0; 6];
         self.stream.read_exact(&mut small_buffer[0..6])?;
         if &small_buffer[0..6] != MAGIC {
@@ -99,9 +100,38 @@ impl MessageType {
 }
 
 #[derive(Debug)]
-pub struct Response {
+pub struct Response<T> {
     pub msg_type: MessageType,
-    pub content: serde_json::Value,
+    pub content: T,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Output {
+    pub active: bool,
+    pub id: u32,
+    pub name: String,
+    pub modes: Vec<Mode>,
+    pub make: String,
+    pub model: String,
+    pub serial: String,
+    pub scale: f32,
+    pub transform: String,
+    pub current_mode: Mode,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Rect {
+    pub x: u32,
+    pub y: u32,
+    pub width: u32,
+    pub height: u32,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+pub struct Mode {
+    pub width: u32,
+    pub height: u32,
+    pub refresh: u32,
 }
 
 #[derive(Debug)]
